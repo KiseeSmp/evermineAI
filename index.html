@@ -617,4 +617,63 @@ async function send() {
   }
   userContentEl.innerHTML = previewHtml + renderMarkdown(text || '(foto terlampir)');
 
-  // susun 
+  // susun content untuk API: array jika ada gambar, string biasa jika tidak
+  let apiContent;
+  if (pendingImage) {
+    apiContent = [
+      { type: 'image', source: { type: 'base64', media_type: pendingImage.mediaType, data: pendingImage.data } },
+      { type: 'text', text: text || 'Tolong lihat foto ini.' }
+    ];
+  } else {
+    apiContent = text;
+  }
+  history.push({ role: 'user', content: apiContent });
+
+  input.value = '';
+  input.style.height = 'auto';
+  pendingImage = null;
+  previewWrap.style.display = 'none';
+  previewWrap.innerHTML = '';
+  fileInput.value = '';
+  addTyping();
+
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1500,
+        system: "Kamu adalah Evermine AI, asisten AI buatan by.nathan yang ahli membuat plugin server Minecraft (Bukkit/Spigot/Paper) selain juga asisten umum yang ramah. Selalu balas dalam Bahasa Indonesia yang natural. ATURAN PENTING: jika pengguna meminta plugin, script, atau fitur server Minecraft apa pun (ClearLag, TP, Warp, Kit, Shop, Anti-grief, dll), langsung buatkan kodenya secara lengkap dan siap pakai — kode Java plugin utama DAN file plugin.yml/config.yml-nya, masing-masing dalam blok kode markdown terpisah, jangan tanya balik dulu kecuali benar-benar perlu.",
+        messages: history
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server merespons dengan status ${response.status}`);
+    }
+
+    const data = await response.json();
+    const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
+    const replyText = textBlocks.join('\n\n') || '(tidak ada respons teks)';
+
+    history.push({ role: 'assistant', content: replyText });
+
+    document.getElementById('typingRow')?.remove();
+    const aiContentEl = addRow('ai', replyText);
+    aiContentEl.innerHTML = renderMarkdown(replyText);
+  } catch (err) {
+    document.getElementById('typingRow')?.remove();
+    const aiContentEl = addRow('ai', '');
+    aiContentEl.innerHTML = renderMarkdown(
+      `Maaf, ada masalah menghubungi server: **${err.message}**\n\nCek apakah URL proxy di kode (\`API_ENDPOINT\`) sudah benar dan worker sudah di-deploy.`
+    );
+  } finally {
+    busy = false;
+    sendBtn.disabled = false;
+    chat.scrollTop = chat.scrollHeight;
+  }
+}
+</script>
+ </body>
+</html>
