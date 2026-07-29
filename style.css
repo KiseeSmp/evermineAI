@@ -8,47 +8,94 @@
 body{
     background:#202123;
     color:white;
-}
-
-.container{
-    display:flex;
-    flex-direction:column;
     height:100vh;
 }
 
-header{
-    background:#343541;
-    padding:20px;
-    text-align:center;
-    border-bottom:1px solid #555;
+.app{
+    display:flex;
+    height:100vh;
 }
 
-header h1{
-    font-size:28px;
+/* Sidebar */
+
+.sidebar{
+    width:260px;
+    background:#171717;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+}
+
+.sidebar h2{
+    margin-bottom:20px;
+}
+
+.new-chat{
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:#10a37f;
+    color:white;
+    cursor:pointer;
+    margin-bottom:20px;
+}
+
+.history{
+    flex:1;
+}
+
+.history p{
+    color:#999;
+    margin-bottom:10px;
+}
+
+.item{
+    padding:10px;
+    border-radius:8px;
+    cursor:pointer;
+    margin-bottom:8px;
+}
+
+.item:hover{
+    background:#2d2d2d;
+}
+
+/* Area utama */
+
+.main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+}
+
+header{
+    padding:20px;
+    background:#343541;
+    border-bottom:1px solid #444;
 }
 
 header p{
-    color:#bdbdbd;
+    color:#aaa;
     margin-top:5px;
 }
 
 #chat{
     flex:1;
+    overflow:auto;
     padding:20px;
-    overflow-y:auto;
 }
 
 .ai{
     background:#444654;
     padding:15px;
     border-radius:12px;
-    max-width:90%;
+    max-width:700px;
 }
 
 footer{
     display:flex;
     gap:10px;
-    padding:15px;
+    padding:20px;
     background:#343541;
 }
 
@@ -57,17 +104,17 @@ input{
     padding:15px;
     border:none;
     border-radius:10px;
-    outline:none;
     background:#40414f;
     color:white;
+    outline:none;
 }
 
 button{
+    padding:15px 20px;
+    border:none;
+    border-radius:10px;
     background:#10a37f;
     color:white;
-    border:none;
-    padding:15px 20px;
-    border-radius:10px;
     cursor:pointer;
 }
 
