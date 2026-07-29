@@ -1,7 +1,7 @@
-// ===========================
+// ======================================
 // evermineAI V5 Flash Pro
 // app.js
-// ===========================
+// ======================================
 
 const chat = document.getElementById("chat");
 const input = document.getElementById("pesan");
@@ -9,103 +9,229 @@ const kirim = document.getElementById("kirim");
 const model = document.getElementById("model");
 const newChat = document.querySelector(".new-chat");
 
-// Event
+// ===============================
+// Tombol Kirim
+// ===============================
+
 kirim.addEventListener("click", kirimPesan);
 
+// ===============================
+// Enter
+// ===============================
+
 input.addEventListener("keydown", function(e){
+
     if(e.key === "Enter"){
         kirimPesan();
     }
+
 });
 
-newChat.addEventListener("click", chatBaru);
-
+// ===============================
 // Chat Baru
-function chatBaru(){
+// ===============================
+
+newChat.addEventListener("click", function(){
 
     chat.innerHTML = `
-    <div class="message ai">
-        <div class="bubble">
-            👋 Halo! Mulai percakapan baru.
+
+        <div class="message ai">
+
+            <div class="bubble">
+
+                <h2>👋 Chat Baru</h2>
+
+                <br>
+
+                Halo!
+
+                <br><br>
+
+                Saya siap membantu Anda.
+
+                <br><br>
+
+                Silakan mulai percakapan baru.
+
+            </div>
+
         </div>
-    </div>
+
     `;
 
-}
+});
 
+// ===============================
 // Kirim Pesan
-async function kirimPesan(){
+// ===============================
 
-    const teks = input.value.trim();
+function kirimPesan(){
 
-    if(teks === "") return;
+    let teks = input.value.trim();
 
-    tambahPesan(teks,"user");
+    if(teks==="") return;
 
-    input.value = "";
+    tambahPesanUser(teks);
 
-    const jawaban = await kirimKeAI(teks);
+    input.value="";
 
-    tambahPesan(jawaban,"ai");
+    input.focus();
+
+    setTimeout(function(){
+
+        balasAI(teks);
+
+    },800);
 
 }
-// ===========================
-// CHAT
-// ===========================
 
-function tambahPesan(teks, tipe){
+// ===============================
+// Bubble User
+// ===============================
+
+function tambahPesanUser(teks){
 
     chat.innerHTML += `
-    <div class="message ${tipe}">
-        <div class="bubble">
-            ${teks}
+
+        <div class="message user">
+
+            <div class="bubble">
+
+                ${teks}
+
+            </div>
+
         </div>
-    </div>
+
     `;
+
+    scrollBawah();
+
+}
+
+// ===============================
+// Bubble AI
+// ===============================
+
+function tambahPesanAI(teks){
+
+    chat.innerHTML += `
+
+        <div class="message ai">
+
+            <div class="bubble">
+
+                ${teks}
+
+            </div>
+
+        </div>
+
+    `;
+
+    scrollBawah();
+
+}
+
+// ===============================
+// Scroll
+// ===============================
+
+function scrollBawah(){
 
     chat.scrollTop = chat.scrollHeight;
 
 }
-// ===========================
-// MODEL
-// ===========================
 
-function namaModel(){
+// ===============================
+// AI Demo
+// ===============================
 
-    return model.value;
+function balasAI(prompt){
 
-}
-// ===========================
-// API
-// ===========================
+    const namaModel = model.value;
 
-async function kirimKeAI(pesan){
+    let jawaban = "";
 
-    return `
-    🤖 <b>${namaModel()}</b>
+    const p = prompt.toLowerCase();
 
-    <br><br>
+    if(p.includes("halo")){
 
-    Kamu mengirim:
+        jawaban = `
+        👋 Halo!
 
-    <br>
+        Saya <b>${namaModel}</b>.
 
-    <b>${pesan}</b>
+        Senang bertemu dengan Anda.
+        `;
 
-    <br><br>
+    }
 
-    API belum dihubungkan.
-    `;
+    else if(p.includes("siapa kamu")){
 
-}
-// ===========================
-// STORAGE
-// ===========================
+        jawaban = `
+        🤖 Saya adalah
+        <b>evermineAI V5 Flash Pro</b>.
 
-function simpan(){
+        Saat ini saya masih berjalan dalam mode demo.
+        `;
 
-}
+    }
 
-function load(){
+    else if(p.includes("terima kasih")){
+
+        jawaban = `
+        😊 Sama-sama.
+
+        Senang bisa membantu.
+        `;
+
+    }
+
+    else{
+
+        jawaban = `
+        🤖 <b>${namaModel}</b>
+
+        <br><br>
+
+        Saya menerima pesan:
+
+        <br><br>
+
+        <b>"${prompt}"</b>
+
+        <br><br>
+
+        Saat ini aplikasi masih menggunakan mode demo.
+
+        <br><br>
+
+        Nanti kita akan menghubungkannya ke:
+
+        <br>
+
+        ✅ Gemini API
+
+        <br>
+
+        ✅ OpenAI API
+
+        <br>
+
+        ✅ Claude API
+
+        <br>
+
+        ✅ DeepSeek API
+
+        <br>
+
+        sehingga AI bisa benar-benar menjawab.
+        `;
+
+    }
+
+    tambahPesanAI(jawaban);
 
 }
