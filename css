@@ -15,10 +15,6 @@ body{
     height:100vh;
 }
 
-/* ==========================
-   SIDEBAR
-========================== */
-
 .sidebar{
     width:260px;
     background:#171717;
@@ -60,24 +56,17 @@ body{
     border-radius:10px;
     cursor:pointer;
     margin-bottom:10px;
-    transition:.3s;
 }
 
 .chat-item:hover{
     background:#2b2b2b;
 }
-/* ==========================
-   MAIN
-========================== */
-
 .main{
     flex:1;
     display:flex;
     flex-direction:column;
     background:#202123;
 }
-
-/* Header */
 
 .header{
     height:80px;
@@ -94,21 +83,15 @@ body{
 
 .title p{
     color:#9ca3af;
-    margin-top:4px;
 }
-
-/* Model */
 
 .model-select{
     background:#343541;
     color:white;
     border:none;
     border-radius:10px;
-    padding:12px 16px;
-    cursor:pointer;
+    padding:12px;
 }
-
-/* Chat */
 
 .chat-area{
     flex:1;
@@ -121,12 +104,12 @@ body{
     margin-bottom:20px;
 }
 
-.message.ai{
-    justify-content:flex-start;
-}
-
 .message.user{
     justify-content:flex-end;
+}
+
+.message.ai{
+    justify-content:flex-start;
 }
 
 .bubble{
@@ -136,205 +119,65 @@ body{
     line-height:1.7;
 }
 
-.ai .bubble{
-    background:#343541;
-}
-
 .user .bubble{
     background:#10a37f;
 }
 
-/* Input */
-
+.ai .bubble{
+    background:#343541;
+}
 .input-area{
     display:flex;
     gap:10px;
     padding:20px;
     border-top:1px solid #2d2d2d;
 }
-// ===========================
-// evermineAI V5 Flash Pro
-// ===========================
 
-const chat = document.getElementById("chat");
-const input = document.getElementById("pesan");
-const kirim = document.getElementById("kirim");
-const model = document.getElementById("model");
-const newChat = document.querySelector(".new-chat");
-
-// Tombol Kirim
-kirim.addEventListener("click", kirimPesan);
-
-// Tombol Enter
-input.addEventListener("keydown", function(e){
-    if(e.key === "Enter"){
-        kirimPesan();
-    }
-});
-
-// Chat Baru
-newChat.addEventListener("click", function(){
-
-    chat.innerHTML = `
-        <div class="message ai">
-            <div class="bubble">
-                👋 Halo! Saya <b>evermineAI V5 Flash Pro</b>.
-                <br><br>
-                Silakan mulai percakapan baru.
-            </div>
-        </div>
-    `;
-
-});
-
-// Kirim Pesan
-function kirimPesan(){
-
-    let teks = input.value.trim();
-
-    if(teks === "") return;
-
-    // Bubble User
-    chat.innerHTML += `
-        <div class="message user">
-            <div class="bubble">
-                ${teks}
-            </div>
-        </div>
-    `;
-
-    input.value = "";
-
-    chat.scrollTop = chat.scrollHeight;
-
-    // Efek mengetik
-    setTimeout(function(){
-
-        balasAI();
-
-    },800);
-
-}
-
-// Balasan AI
-function balasAI(){
-
-    let namaModel = model.value;
-
-    chat.innerHTML += `
-        <div class="message ai">
-            <div class="bubble">
-
-                🤖 <b>${namaModel}</b>
-
-                <br><br>
-
-                Saya belum terhubung ke API.
-
-                <br>
-
-                Ini adalah tampilan awal evermineAI.
-
-            </div>
-        </div>
-    `;
-
-    chat.scrollTop = chat.scrollHeight;
-
-    }
-    /* ==========================
-   RESPONSIVE
-========================== */
-
-/* Tablet */
-
-@media (max-width:1024px){
-
-.app{
-flex-direction:column;
-height:auto;
-}
-
-.sidebar{
-width:100%;
-height:220px;
-border-right:none;
-border-bottom:1px solid #2d2d2d;
-}
-
-.main{
-width:100%;
-height:calc(100vh - 220px);
-}
-
-}
-
-/* HP */
-
-@media (max-width:768px){
-
-.sidebar{
-height:180px;
-}
-
-.logo{
-font-size:20px;
-text-align:center;
-}
-
-.new-chat{
-margin:10px;
-}
-
-.header{
-padding:15px;
-}
-
-.header h1{
-font-size:28px;
-}
-
-.model-select{
-width:100%;
-margin-top:10px;
-}
-
-.input-area{
-padding:10px;
-}
-
-.input-area input{
-font-size:15px;
+#pesan{
+    flex:1;
+    padding:15px;
+    border:none;
+    border-radius:12px;
+    outline:none;
+    background:#343541;
+    color:white;
 }
 
 #kirim{
-padding:12px 18px;
+    padding:15px 22px;
+    border:none;
+    border-radius:12px;
+    background:#10a37f;
+    color:white;
+    cursor:pointer;
 }
 
+#kirim:hover{
+    background:#0d8f6f;
+}
+@media(max-width:768px){
+
+.app{
+    flex-direction:column;
 }
 
-/* HP Kecil */
-
-@media (max-width:480px){
-
-.header h1{
-font-size:22px;
+.sidebar{
+    width:100%;
+    height:200px;
 }
 
-.message .bubble{
-font-size:14px;
+.header{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
 }
 
-.logo{
-font-size:18px;
+.chat-area{
+    padding:15px;
 }
 
-.new-chat{
-font-size:14px;
-}
-
-.chat-item{
-font-size:14px;
+.input-area{
+    padding:15px;
 }
 
 }
