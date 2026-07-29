@@ -1,20 +1,33 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>evermineAI V5 Flash Pro</title>
 
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>evermineAI V5 Flash Pro</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/chat.css">
+    <link rel="stylesheet" href="css/button.css">
+    <link rel="stylesheet" href="css/responsive.css">
+
 </head>
 
 <body>
 
 <div class="app">
 
+    <!-- =========================
+         SIDEBAR
+    ========================== -->
+
     <aside class="sidebar">
 
-        <h2>🤖 evermineAI</h2>
+        <div class="logo">
+            🤖 evermineAI
+        </div>
 
         <button class="new-chat">
             + Chat Baru
@@ -22,50 +35,112 @@
 
         <div class="history">
 
-            <p>Hari ini</p>
-
-            <div class="item">
-                Halo AI
+            <div class="chat-item active">
+                💬 Percakapan Baru
             </div>
 
-            <div class="item">
-                Belajar HTML
-            </div>
+        </div>
+
+        <div class="sidebar-footer">
+
+            <button class="menu-btn">
+                ⚙️ Pengaturan
+            </button>
 
         </div>
 
     </aside>
 
+    <!-- =========================
+         MAIN
+    ========================== -->
+
     <main class="main">
 
-        <header>
+        <!-- Header -->
 
-            <h1>evermineAI V5 Flash Pro</h1>
+        <header class="header">
 
-            <p>Model AI generasi terbaru</p>
+            <div class="title">
+
+                <h1>evermineAI V5 Flash Pro</h1>
+
+                <p>Powered by Multi AI</p>
+
+            </div>
+
+            <select id="model" class="model-select">
+
+                <option>⚡ V5 Flash Pro</option>
+
+                <option>🤖 ChatGPT</option>
+
+                <option>🧠 Claude</option>
+
+                <option>✨ Gemini</option>
+
+            </select>
 
         </header>
 
-        <section id="chat">
+        <!-- Chat -->
 
-            <div class="ai">
-                Halo 👋
-                <br><br>
-                Saya adalah evermineAI V5 Flash Pro.
+        <section
+            class="chat-area"
+            id="chat">
+
+            <div class="message ai">
+
+                <div class="bubble">
+
+                    <h2>👋 Selamat Datang</h2>
+
+                    <br>
+
+                    Saya adalah
+
+                    <b>evermineAI V5 Flash Pro</b>
+
+                    <br><br>
+
+                    Saya akan segera mendukung:
+
+                    <br><br>
+
+                    ✅ ChatGPT
+
+                    <br>
+
+                    ✅ Claude
+
+                    <br>
+
+                    ✅ Gemini
+
+                    <br>
+
+                    ✅ Mode Fusion AI
+
+                </div>
+
             </div>
 
         </section>
 
-        <footer>
+        <!-- Input -->
+
+        <footer class="input-area">
 
             <input
                 id="pesan"
                 type="text"
-                placeholder="Tulis pertanyaan..."
-            >
+                placeholder="Tanyakan apa saja..."
+                autocomplete="off">
 
             <button id="kirim">
+
                 Kirim
+
             </button>
 
         </footer>
@@ -74,7 +149,17 @@
 
 </div>
 
-<script src="script.js"></script>
+<!-- JavaScript -->
+
+<script src="js/storage.js"></script>
+
+<script src="js/model.js"></script>
+
+<script src="js/chat.js"></script>
+
+<script src="js/api.js"></script>
+
+<script src="js/app.js"></script>
 
 </body>
 </html>
