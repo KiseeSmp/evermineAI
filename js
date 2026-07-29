@@ -1,237 +1,51 @@
-// ======================================
-// evermineAI V5 Flash Pro
-// app.js
-// ======================================
-
-const chat = document.getElementById("chat");
-const input = document.getElementById("pesan");
-const kirim = document.getElementById("kirim");
-const model = document.getElementById("model");
-const newChat = document.querySelector(".new-chat");
-
-// ===============================
-// Tombol Kirim
-// ===============================
-
-kirim.addEventListener("click", kirimPesan);
-
-// ===============================
-// Enter
-// ===============================
-
-input.addEventListener("keydown", function(e){
-
-    if(e.key === "Enter"){
-        kirimPesan();
+export default {
+  async fetch(request, env) {
+    // Tangani preflight CORS
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type"
+        }
+      });
     }
 
-});
-
-// ===============================
-// Chat Baru
-// ===============================
-
-newChat.addEventListener("click", function(){
-
-    chat.innerHTML = `
-
-        <div class="message ai">
-
-            <div class="bubble">
-
-                <h2>👋 Chat Baru</h2>
-
-                <br>
-
-                Halo!
-
-                <br><br>
-
-                Saya siap membantu Anda.
-
-                <br><br>
-
-                Silakan mulai percakapan baru.
-
-            </div>
-
-        </div>
-
-    `;
-
-});
-
-// ===============================
-// Kirim Pesan
-// ===============================
-
-function kirimPesan(){
-
-    let teks = input.value.trim();
-
-    if(teks==="") return;
-
-    tambahPesanUser(teks);
-
-    input.value="";
-
-    input.focus();
-
-    setTimeout(function(){
-
-        balasAI(teks);
-
-    },800);
-
-}
-
-// ===============================
-// Bubble User
-// ===============================
-
-function tambahPesanUser(teks){
-
-    chat.innerHTML += `
-
-        <div class="message user">
-
-            <div class="bubble">
-
-                ${teks}
-
-            </div>
-
-        </div>
-
-    `;
-
-    scrollBawah();
-
-}
-
-// ===============================
-// Bubble AI
-// ===============================
-
-function tambahPesanAI(teks){
-
-    chat.innerHTML += `
-
-        <div class="message ai">
-
-            <div class="bubble">
-
-                ${teks}
-
-            </div>
-
-        </div>
-
-    `;
-
-    scrollBawah();
-
-}
-
-// ===============================
-// Scroll
-// ===============================
-
-function scrollBawah(){
-
-    chat.scrollTop = chat.scrollHeight;
-
-}
-
-// ===============================
-// AI Demo
-// ===============================
-
-function balasAI(prompt){
-
-    const namaModel = model.value;
-
-    let jawaban = "";
-
-    const p = prompt.toLowerCase();
-
-    if(p.includes("halo")){
-
-        jawaban = `
-        👋 Halo!
-
-        Saya <b>${namaModel}</b>.
-
-        Senang bertemu dengan Anda.
-        `;
-
+    if (request.method !== "POST") {
+      return new Response("Method not allowed", { status: 405 });
     }
 
-    else if(p.includes("siapa kamu")){
+    try {
+      const body = await request.text();
 
-        jawaban = `
-        🤖 Saya adalah
-        <b>evermineAI V5 Flash Pro</b>.
+      const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": env.ANTHROPIC_API_KEY, // diset lewat wrangler secret, TIDAK ditulis di kode
+          "anthropic-version": "2023-06-01"
+        },
+        body
+      });
 
-        Saat ini saya masih berjalan dalam mode demo.
-        `;
+      const data = await anthropicRes.text();
 
+      return new Response(data, {
+        status: anthropicRes.status,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: "Proxy error", detail: String(err) }), {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
     }
-
-    else if(p.includes("terima kasih")){
-
-        jawaban = `
-        😊 Sama-sama.
-
-        Senang bisa membantu.
-        `;
-
-    }
-
-    else{
-
-        jawaban = `
-        🤖 <b>${namaModel}</b>
-
-        <br><br>
-
-        Saya menerima pesan:
-
-        <br><br>
-
-        <b>"${prompt}"</b>
-
-        <br><br>
-
-        Saat ini aplikasi masih menggunakan mode demo.
-
-        <br><br>
-
-        Nanti kita akan menghubungkannya ke:
-
-        <br>
-
-        ✅ Gemini API
-
-        <br>
-
-        ✅ OpenAI API
-
-        <br>
-
-        ✅ Claude API
-
-        <br>
-
-        ✅ DeepSeek API
-
-        <br>
-
-        sehingga AI bisa benar-benar menjawab.
-        `;
-
-    }
-
-    tambahPesanAI(jawaban);
-
-}
+  }
+};
