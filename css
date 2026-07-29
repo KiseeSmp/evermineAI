@@ -242,3 +242,99 @@ function balasAI(){
     chat.scrollTop = chat.scrollHeight;
 
     }
+    /* ==========================
+   RESPONSIVE
+========================== */
+
+/* Tablet */
+
+@media (max-width:1024px){
+
+.app{
+flex-direction:column;
+height:auto;
+}
+
+.sidebar{
+width:100%;
+height:220px;
+border-right:none;
+border-bottom:1px solid #2d2d2d;
+}
+
+.main{
+width:100%;
+height:calc(100vh - 220px);
+}
+
+}
+
+/* HP */
+
+@media (max-width:768px){
+
+.sidebar{
+height:180px;
+}
+
+.logo{
+font-size:20px;
+text-align:center;
+}
+
+.new-chat{
+margin:10px;
+}
+
+.header{
+padding:15px;
+}
+
+.header h1{
+font-size:28px;
+}
+
+.model-select{
+width:100%;
+margin-top:10px;
+}
+
+.input-area{
+padding:10px;
+}
+
+.input-area input{
+font-size:15px;
+}
+
+#kirim{
+padding:12px 18px;
+}
+
+}
+
+/* HP Kecil */
+
+@media (max-width:480px){
+
+.header h1{
+font-size:22px;
+}
+
+.message .bubble{
+font-size:14px;
+}
+
+.logo{
+font-size:18px;
+}
+
+.new-chat{
+font-size:14px;
+}
+
+.chat-item{
+font-size:14px;
+}
+
+}
