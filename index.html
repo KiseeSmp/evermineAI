@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ai.nathan — chatbot AI pribadimu</title>
+<title>Evermine — chatbot AI pribadimu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -86,9 +86,21 @@
   }
   .brand{
     display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+  .brand-top{
+    display:flex;
     align-items:baseline;
     gap:10px;
     font-family:'Space Grotesk', sans-serif;
+  }
+  .brand .by{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--text-dim);
+    letter-spacing:.03em;
+    padding-left:24px;
   }
   .brand .prompt{
     color:var(--accent);
@@ -368,8 +380,11 @@
 
 <header>
   <div class="brand">
-    <span class="prompt">&gt;</span>
-    <h1>ai.gratis</h1>
+    <div class="brand-top">
+      <span class="prompt">&gt;</span>
+      <h1>Evermine</h1>
+    </div>
+    <span class="by">by. Nathan Developer</span>
   </div>
   <div style="display:flex; align-items:center; gap:10px;">
     <span class="status"><span class="dot" id="statusDot"></span><span id="statusText">Memuat…</span></span>
@@ -402,7 +417,7 @@
     <div id="log">
       <div class="empty" id="emptyState">
         <span class="prompt">&gt;</span> ketik pesan pertamamu di bawah<br>
-        buatan nathan, bebas mau chat di ai apa
+        by.kisee bebas tanya ke ai evermine
       </div>
     </div>
 
@@ -538,7 +553,7 @@ async function handleSend(e){
         body: JSON.stringify({
           contents: history,
           systemInstruction: {
-            parts: [{ text: 'Kamu adalah asisten AI yang ramah, jawab dalam bahasa yang sama dengan pengguna.' }]
+            parts: [{ text: 'Kamu adalah Evermine, asisten AI yang ramah. Jawab dalam bahasa yang sama dengan pengguna.' }]
           }
         })
       }
