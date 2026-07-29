@@ -650,7 +650,14 @@ async function send() {
     });
 
     if (!response.ok) {
-      throw new Error(`Server merespons dengan status ${response.status}`);
+      let detail = '';
+      try {
+        const errData = await response.json();
+        detail = errData?.error?.message || JSON.stringify(errData);
+      } catch (e) {
+        detail = await response.text().catch(() => '(tidak bisa dibaca)');
+      }
+      throw new Error(`Status ${response.status}: ${detail}`);
     }
 
     const data = await response.json();
