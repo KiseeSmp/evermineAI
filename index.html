@@ -383,6 +383,23 @@
 // =====================================================================
 const API_ENDPOINT = "https://ervermine-proxy.evermine.workers.dev";
 
+// ==== DETEKTOR ERROR SEMENTARA (buat debugging) ====
+// Ini nampilin kotak merah di layar kalau ada error JS, biar kelihatan
+// tanpa perlu buka Console. Boleh dihapus nanti kalau chat udah normal.
+function showDebugError(label, msg) {
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#ff3b3b;color:#fff;padding:12px;font-family:monospace;font-size:12px;z-index:99999;white-space:pre-wrap;max-height:40vh;overflow:auto;';
+  box.textContent = label + ': ' + msg;
+  document.body.appendChild(box);
+}
+window.addEventListener('error', function(e) {
+  showDebugError('JS ERROR', e.message + ' (baris ' + e.lineno + ')');
+});
+window.addEventListener('unhandledrejection', function(e) {
+  showDebugError('PROMISE ERROR', (e.reason && e.reason.message) ? e.reason.message : String(e.reason));
+});
+// ==== AKHIR DETEKTOR ERROR ====
+
 const chat = document.getElementById('chat');
 const empty = document.getElementById('empty');
 const input = document.getElementById('msgInput');
@@ -600,31 +617,4 @@ async function send() {
   }
   userContentEl.innerHTML = previewHtml + renderMarkdown(text || '(foto terlampir)');
 
-  // susun content untuk API: array jika ada gambar, string biasa jika tidak
-  let apiContent;
-  if (pendingImage) {
-    apiContent = [
-      { type: 'image', source: { type: 'base64', media_type: pendingImage.mediaType, data: pendingImage.data } },
-      { type: 'text', text: text || 'Tolong lihat foto ini.' }
-    ];
-  } else {
-    apiContent = text;
-  }
-  history.push({ role: 'user', content: apiContent });
-
-  input.value = '';
-  input.style.height = 'auto';
-  pendingImage = null;
-  previewWrap.style.display = 'none';
-  previewWrap.innerHTML = '';
-  fileInput.value = '';
-  addTyping();
-
-  try {
-    const response = await fetch(API_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1500,
-        system: "Kamu adalah Evermine AI, asisten AI buatan by.nathan yang ahli membu
+  // susun 
