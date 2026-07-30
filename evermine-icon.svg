@@ -1,0 +1,55 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#120A22"/>
+      <stop offset="100%" stop-color="#07050D"/>
+    </linearGradient>
+    <linearGradient id="gemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E9D5FF"/>
+      <stop offset="45%" stop-color="#B26BFF"/>
+      <stop offset="100%" stop-color="#6D28D9"/>
+    </linearGradient>
+    <linearGradient id="gemGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A855F7"/>
+      <stop offset="100%" stop-color="#4C1D95"/>
+    </linearGradient>
+    <linearGradient id="infGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F0ABFC"/>
+      <stop offset="100%" stop-color="#C4B5FD"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="5"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="400" height="400" rx="88" fill="url(#bgGrad)"/>
+
+  <!-- ambient glow behind gem -->
+  <circle cx="200" cy="205" r="130" fill="#8B5CF6" opacity="0.22" filter="url(#softGlow)"/>
+
+  <!-- gem facets -->
+  <g filter="url(#glow)">
+    <polygon points="200,78 288,150 200,332 112,150" fill="url(#gemGrad)" stroke="#F3E8FF" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="112,150 200,332 82,168" fill="url(#gemGradDark)" opacity="0.55"/>
+    <polygon points="288,150 200,332 318,168" fill="url(#gemGradDark)" opacity="0.75"/>
+    <polyline points="112,150 200,190 288,150" fill="none" stroke="#F3E8FF" stroke-width="2.5" opacity="0.6"/>
+    <line x1="200" y1="190" x2="200" y2="332" stroke="#F3E8FF" stroke-width="2.5" opacity="0.5"/>
+    <line x1="200" y1="78" x2="200" y2="190" stroke="#F3E8FF" stroke-width="2.5" opacity="0.7"/>
+  </g>
+
+  <!-- infinity loop glowing across the gem's center -->
+  <path d="M 148 214 C 132 196, 132 232, 148 214 C 164 196, 176 232, 200 214 C 224 196, 236 232, 252 214 C 268 196, 268 232, 252 214"
+        fill="none" stroke="url(#infGrad)" stroke-width="7" stroke-linecap="round" filter="url(#glow)" opacity="0.95"/>
+
+  <!-- small sparkle accents -->
+  <circle cx="118" cy="112" r="4" fill="#F0ABFC" opacity="0.9" filter="url(#softGlow)"/>
+  <circle cx="292" cy="120" r="3" fill="#C4B5FD" opacity="0.8" filter="url(#softGlow)"/>
+  <circle cx="270" cy="300" r="3.5" fill="#E9D5FF" opacity="0.85" filter="url(#softGlow)"/>
+</svg>
