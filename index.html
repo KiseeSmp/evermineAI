@@ -1141,7 +1141,9 @@ async function callOpenRouter(apiKey, model, userText, onProgress){
   let full = '';
   await streamSSE(res, (chunk) => {
     const delta = chunk?.choices?.[0]?.delta || {};
-    const piece = delta.content || delta.reasoning || '';
+    // hanya pakai delta.content (jawaban final); delta.reasoning sengaja diabaikan
+    // karena itu teks "berpikir" internal model, bukan jawaban untuk ditampilkan
+    const piece = delta.content || '';
     if(piece){ full += piece; onProgress(full); }
   });
 
