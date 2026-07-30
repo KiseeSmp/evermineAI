@@ -380,6 +380,79 @@
     border-radius:5px;
     font-size:0.92em;
   }
+  .artifact-card{
+    margin-top:12px;
+    background:#0A0714;
+    border:1px solid var(--panel-border);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px rgba(178,107,255,0.06);
+  }
+  .artifact-header{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:9px 12px;
+    background:linear-gradient(180deg, rgba(178,107,255,0.10), rgba(178,107,255,0.03));
+    border-bottom:1px solid var(--panel-border);
+  }
+  .artifact-tabs{
+    display:flex;
+    background:rgba(255,255,255,0.04);
+    border-radius:8px;
+    padding:2px;
+    gap:2px;
+  }
+  .artifact-tab{
+    background:transparent;
+    border:none;
+    color:var(--text-dim);
+    font-size:13px;
+    padding:5px 10px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .artifact-tab.active{
+    background:linear-gradient(135deg,#a855f7,#6d28d9);
+    color:#fff;
+  }
+  .artifact-title{
+    flex:1;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--text-dim);
+    letter-spacing:.03em;
+  }
+  .artifact-copy{
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--panel-border);
+    color:var(--text-dim);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    padding:6px 12px;
+    border-radius:7px;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .artifact-copy:hover{ color:var(--text); border-color:var(--accent); }
+  .artifact-stage{
+    background:#fff;
+    min-height:260px;
+  }
+  .artifact-iframe{
+    display:block;
+    width:100%;
+    height:400px;
+    border:none;
+    background:#fff;
+  }
+  .artifact-code-body{ max-height:400px; background:#0A0714; }
+  .artifact-footer{
+    padding:8px 12px;
+    border-top:1px solid var(--panel-border);
+    background:rgba(255,255,255,0.02);
+  }
   .code-card{
     margin-top:12px;
     background:#0A0714;
@@ -595,7 +668,22 @@ const saveKeyBtn = document.getElementById('saveKey');
 const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 
-const SYSTEM_PROMPT = 'Kamu adalah Evermine, asisten AI yang ramah. Jawab dalam bahasa yang sama dengan pengguna. Kalau diminta membuat logo, ikon, atau gambar vektor, buat sebagai kode SVG utuh dan valid (mulai dari <svg ...> sampai </svg>), dibungkus dalam code fence ```svg ... ```. Kalau diminta membuat atau menulis kode apapun (website, plugin Minecraft/Java, script, dll), selalu bungkus kodenya dalam code fence dengan nama bahasanya, contoh ```java ... ``` atau ```html ... ```, jangan taruh kode di luar code fence.';
+const SYSTEM_PROMPT = `Kamu adalah Evermine, asisten AI yang ramah. Jawab dalam bahasa yang sama dengan pengguna.
+
+Kalau diminta membuat logo, ikon, atau gambar vektor: buat sebagai kode SVG utuh dan valid (dari <svg ...> sampai </svg>), dibungkus code fence \`\`\`svg ... \`\`\`.
+
+Kalau diminta membuat atau menulis kode apapun (website, plugin Minecraft/Java, script, dll), selalu bungkus dalam code fence berlabel bahasa, contoh \`\`\`java ... \`\`\` atau \`\`\`html ... \`\`\`. Jangan taruh kode di luar code fence.
+
+Kalau diminta membuat WEBSITE atau HALAMAN HTML, desainnya harus terlihat modern dan profesional, bukan asal jadi. Ikuti prinsip ini:
+- Pilih SATU palet warna yang serasi (2-3 warna utama + 1 aksen), jangan campur banyak warna neon sekaligus kecuali diminta.
+- Pakai font yang bagus dari Google Fonts (import via <link>), jangan font default browser.
+- Beri jarak (padding/margin) yang lega, jangan elemen mepet-mepet.
+- Sudut membulat (border-radius) dan shadow halus untuk kesan modern, hindari border tebal norak.
+- Tata letak rapi pakai flexbox/grid, responsif untuk HP (gunakan meta viewport).
+- Animasi/transisi secukupnya untuk kesan hidup, jangan berlebihan sampai mengganggu.
+- Untuk section promosi/toko/komunitas, buat seperti landing page modern (hero section jelas, tombol call-to-action menonjol, bukan cuma teks rata tengah dengan warna neon polos).
+- Hindari kombinasi hitam pekat + neon cyan/hijau menyala yang norak kecuali user secara spesifik minta gaya "cyberpunk"/"neon".
+Kalau user tidak menyebutkan gaya tertentu, pakai gaya bersih (clean), elegan, dan nyaman dipandang.`;
 
 let history = []; // { role: 'user' | 'ai', text: string }
 
@@ -734,28 +822,6 @@ function buildCodeCard(part){
   const actions = document.createElement('div');
   actions.className = 'code-actions';
 
-  let iframe = null;
-  if(part.isHtml){
-    const previewBtn = document.createElement('button');
-    previewBtn.className = 'code-btn';
-    previewBtn.textContent = '👁 Preview';
-    previewBtn.addEventListener('click', () => {
-      if(!iframe){
-        iframe = document.createElement('iframe');
-        iframe.className = 'code-preview-frame';
-        iframe.setAttribute('sandbox', 'allow-scripts');
-        iframe.srcdoc = part.code;
-        card.appendChild(iframe);
-        previewBtn.textContent = '🙈 Tutup preview';
-      } else {
-        iframe.remove();
-        iframe = null;
-        previewBtn.textContent = '👁 Preview';
-      }
-    });
-    actions.appendChild(previewBtn);
-  }
-
   const downloadBtn = document.createElement('button');
   downloadBtn.className = 'code-btn';
   downloadBtn.textContent = '⬇ Unduh';
@@ -815,6 +881,111 @@ function buildCodeCard(part){
   return card;
 }
 
+// Kartu khusus untuk HTML: tampil seperti artifact — preview besar duluan, kode di balik toggle
+function buildArtifactCard(part){
+  const card = document.createElement('div');
+  card.className = 'artifact-card';
+
+  const header = document.createElement('div');
+  header.className = 'artifact-header';
+
+  const tabs = document.createElement('div');
+  tabs.className = 'artifact-tabs';
+  const previewTab = document.createElement('button');
+  previewTab.className = 'artifact-tab active';
+  previewTab.innerHTML = '👁';
+  previewTab.title = 'Preview';
+  const codeTab = document.createElement('button');
+  codeTab.className = 'artifact-tab';
+  codeTab.innerHTML = '&lt;/&gt;';
+  codeTab.title = 'Kode';
+  tabs.appendChild(previewTab);
+  tabs.appendChild(codeTab);
+  header.appendChild(tabs);
+
+  const title = document.createElement('span');
+  title.className = 'artifact-title';
+  title.textContent = 'index · HTML';
+  header.appendChild(title);
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'artifact-copy';
+  copyBtn.textContent = 'Salin';
+  copyBtn.addEventListener('click', async () => {
+    try{ await navigator.clipboard.writeText(part.code); }
+    catch(e){
+      const ta = document.createElement('textarea');
+      ta.value = part.code;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    copyBtn.textContent = '✓ Disalin';
+    setTimeout(() => copyBtn.textContent = 'Salin', 1500);
+  });
+  header.appendChild(copyBtn);
+  card.appendChild(header);
+
+  const stage = document.createElement('div');
+  stage.className = 'artifact-stage';
+  card.appendChild(stage);
+
+  const iframe = document.createElement('iframe');
+  iframe.className = 'artifact-iframe';
+  iframe.setAttribute('sandbox', 'allow-scripts');
+  iframe.srcdoc = part.code;
+
+  const codeView = document.createElement('div');
+  codeView.className = 'code-body artifact-code-body';
+  const lines = part.code.split('\n');
+  const gutter = document.createElement('div');
+  gutter.className = 'code-gutter';
+  gutter.textContent = lines.map((_, i) => i + 1).join('\n');
+  const pre = document.createElement('pre');
+  const codeEl = document.createElement('code');
+  codeEl.innerHTML = escapeHtml(part.code);
+  pre.appendChild(codeEl);
+  codeView.appendChild(gutter);
+  codeView.appendChild(pre);
+
+  stage.appendChild(iframe); // default: tampilkan preview
+
+  previewTab.addEventListener('click', () => {
+    previewTab.classList.add('active');
+    codeTab.classList.remove('active');
+    stage.innerHTML = '';
+    stage.appendChild(iframe);
+  });
+  codeTab.addEventListener('click', () => {
+    codeTab.classList.add('active');
+    previewTab.classList.remove('active');
+    stage.innerHTML = '';
+    stage.appendChild(codeView);
+  });
+
+  const footer = document.createElement('div');
+  footer.className = 'artifact-footer';
+  const downloadBtn = document.createElement('button');
+  downloadBtn.className = 'code-btn';
+  downloadBtn.textContent = '⬇ Unduh index.html';
+  downloadBtn.addEventListener('click', () => {
+    const blob = new Blob([part.code], { type:'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'index.html';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+  footer.appendChild(downloadBtn);
+  card.appendChild(footer);
+
+  return card;
+}
+
 function addMessage(role, text, isError=false){
   emptyState.remove();
   const div = document.createElement('div');
@@ -836,7 +1007,7 @@ function addMessage(role, text, isError=false){
         preview.innerHTML = part.code;
         div.appendChild(preview);
       } else if(part.type === 'code'){
-        div.appendChild(buildCodeCard(part));
+        div.appendChild(part.isHtml ? buildArtifactCard(part) : buildCodeCard(part));
       }
     });
   } else {
@@ -996,7 +1167,7 @@ function renderAiParts(container, text){
       preview.innerHTML = part.code;
       container.appendChild(preview);
     } else if(part.type === 'code'){
-      container.appendChild(buildCodeCard(part));
+      container.appendChild(part.isHtml ? buildArtifactCard(part) : buildCodeCard(part));
     }
   });
 }
