@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Evermine — chatbot AI pribadimu</title>
+<link rel="icon" type="image/svg+xml" href="evermine-icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -86,21 +87,12 @@
   }
   .brand{
     display:flex;
-    flex-direction:column;
-    gap:2px;
+    align-items:center;
   }
-  .brand-top{
-    display:flex;
-    align-items:baseline;
-    gap:10px;
-    font-family:'Space Grotesk', sans-serif;
-  }
-  .brand .by{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:10.5px;
-    color:var(--text-dim);
-    letter-spacing:.03em;
-    padding-left:24px;
+  .brand-logo{
+    height:46px;
+    width:auto;
+    display:block;
   }
   .brand .prompt{
     color:var(--accent);
@@ -379,6 +371,68 @@
     height:auto;
     display:block;
   }
+  .code-card{
+    margin-top:10px;
+    background:#0A0714;
+    border:1px solid var(--panel-border);
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 4px 18px rgba(0,0,0,0.4);
+  }
+  .code-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:8px 12px;
+    background:rgba(178,107,255,0.08);
+    border-bottom:1px solid var(--panel-border);
+  }
+  .code-lang{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--text-dim);
+    letter-spacing:.05em;
+  }
+  .code-actions{display:flex; gap:6px;}
+  .code-btn{
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--panel-border);
+    color:var(--text-dim);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    padding:5px 9px;
+    border-radius:7px;
+    cursor:pointer;
+    transition:.15s;
+    white-space:nowrap;
+  }
+  .code-btn:hover{ color:var(--text); border-color:var(--accent); }
+  .code-btn.primary{
+    background:linear-gradient(135deg,#a855f7,#6d28d9);
+    color:#fff;
+    border:none;
+  }
+  .code-btn.primary:hover{ box-shadow:var(--glow); }
+  .code-card pre{
+    margin:0;
+    padding:14px;
+    overflow-x:auto;
+    max-height:340px;
+  }
+  .code-card code{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color:#E9D5FF;
+    white-space:pre;
+  }
+  .code-preview-frame{
+    display:block;
+    width:100%;
+    height:320px;
+    border:none;
+    border-top:1px solid var(--panel-border);
+    background:#fff;
+  }
   @keyframes shakeX{
     0%,100%{transform:translateX(0);}
     20%,60%{transform:translateX(-6px);}
@@ -397,11 +451,7 @@
 
 <header>
   <div class="brand">
-    <div class="brand-top">
-      <span class="prompt">&gt;</span>
-      <h1>Evermine</h1>
-    </div>
-    <span class="by">by. Nathan Developer</span>
+    <img src="evermine-logo.svg" alt="Evermine" class="brand-logo">
   </div>
   <div style="display:flex; align-items:center; gap:10px;">
     <span class="status"><span class="dot" id="statusDot"></span><span id="statusText">Memuat…</span></span>
@@ -496,7 +546,7 @@ const saveKeyBtn = document.getElementById('saveKey');
 const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 
-const SYSTEM_PROMPT = 'Kamu adalah Evermine, asisten AI yang ramah. Jawab dalam bahasa yang sama dengan pengguna. Kalau diminta membuat logo, ikon, atau gambar vektor, buat sebagai kode SVG utuh dan valid (mulai dari <svg ...> sampai </svg>), dibungkus dalam code fence ```svg ... ```.';
+const SYSTEM_PROMPT = 'Kamu adalah Evermine, asisten AI yang ramah. Jawab dalam bahasa yang sama dengan pengguna. Kalau diminta membuat logo, ikon, atau gambar vektor, buat sebagai kode SVG utuh dan valid (mulai dari <svg ...> sampai </svg>), dibungkus dalam code fence ```svg ... ```. Kalau diminta membuat atau menulis kode apapun (website, plugin Minecraft/Java, script, dll), selalu bungkus kodenya dalam code fence dengan nama bahasanya, contoh ```java ... ``` atau ```html ... ```, jangan taruh kode di luar code fence.';
 
 let history = []; // { role: 'user' | 'ai', text: string }
 
@@ -558,14 +608,108 @@ function stripDangerousTags(svg){
     .replace(/\son\w+\s*=\s*'[^']*'/gi, '');
 }
 
-function extractSvg(text){
-  const fenceMatch = text.match(/```(?:xml|svg|html)?\s*([\s\S]*?<svg[\s\S]*?<\/svg>[\s\S]*?)```/i);
-  const raw = fenceMatch ? fenceMatch[1] : text;
-  const svgMatch = raw.match(/<svg[\s\S]*?<\/svg>/i);
-  if(!svgMatch) return { svg: null, cleaned: text };
-  const removeTarget = fenceMatch ? fenceMatch[0] : svgMatch[0];
-  const cleaned = text.replace(removeTarget, '').trim();
-  return { svg: stripDangerousTags(svgMatch[0]), cleaned };
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function looksLikeHtml(lang, code){
+  return lang === 'html' || /<!DOCTYPE html|<html[\s>]/i.test(code);
+}
+function looksLikeSvg(lang, code){
+  return lang === 'svg' || /^\s*<svg[\s>]/i.test(code);
+}
+
+// Memecah teks jadi bagian teks biasa dan blok kode ```lang ... ```
+function parseContent(text){
+  const parts = [];
+  const fenceRe = /```(\w+)?\n?([\s\S]*?)```/g;
+  let lastIndex = 0, match;
+  while((match = fenceRe.exec(text)) !== null){
+    if(match.index > lastIndex){
+      parts.push({ type:'text', value:text.slice(lastIndex, match.index).trim() });
+    }
+    const lang = (match[1] || '').toLowerCase();
+    const code = match[2].trim();
+    if(looksLikeSvg(lang, code)){
+      parts.push({ type:'svg', code: stripDangerousTags(code) });
+    } else {
+      parts.push({ type:'code', lang: lang || 'kode', code, isHtml: looksLikeHtml(lang, code) });
+    }
+    lastIndex = fenceRe.lastIndex;
+  }
+  if(lastIndex < text.length){
+    const rest = text.slice(lastIndex).trim();
+    if(rest) parts.push({ type:'text', value: rest });
+  }
+  return parts.length ? parts : [{ type:'text', value:text }];
+}
+
+function buildCodeCard(part){
+  const card = document.createElement('div');
+  card.className = 'code-card';
+
+  const header = document.createElement('div');
+  header.className = 'code-header';
+
+  const langLabel = document.createElement('span');
+  langLabel.className = 'code-lang';
+  langLabel.textContent = part.lang.toUpperCase();
+  header.appendChild(langLabel);
+
+  const actions = document.createElement('div');
+  actions.className = 'code-actions';
+
+  let iframe = null;
+  if(part.isHtml){
+    const previewBtn = document.createElement('button');
+    previewBtn.className = 'code-btn';
+    previewBtn.textContent = '👁 Preview';
+    previewBtn.addEventListener('click', () => {
+      if(!iframe){
+        iframe = document.createElement('iframe');
+        iframe.className = 'code-preview-frame';
+        iframe.setAttribute('sandbox', 'allow-scripts');
+        iframe.srcdoc = part.code;
+        card.appendChild(iframe);
+        previewBtn.textContent = '🙈 Tutup preview';
+      } else {
+        iframe.remove();
+        iframe = null;
+        previewBtn.textContent = '👁 Preview';
+      }
+    });
+    actions.appendChild(previewBtn);
+  }
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'code-btn primary';
+  copyBtn.textContent = 'Salin';
+  copyBtn.addEventListener('click', async () => {
+    try{
+      await navigator.clipboard.writeText(part.code);
+    } catch(e){
+      const ta = document.createElement('textarea');
+      ta.value = part.code;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    copyBtn.textContent = '✓ Disalin';
+    setTimeout(() => copyBtn.textContent = 'Salin', 1500);
+  });
+  actions.appendChild(copyBtn);
+
+  header.appendChild(actions);
+  card.appendChild(header);
+
+  const pre = document.createElement('pre');
+  const codeEl = document.createElement('code');
+  codeEl.innerHTML = escapeHtml(part.code);
+  pre.appendChild(codeEl);
+  card.appendChild(pre);
+
+  return card;
 }
 
 function addMessage(role, text, isError=false){
@@ -574,20 +718,23 @@ function addMessage(role, text, isError=false){
   div.className = 'msg ' + (role === 'user' ? 'user' : 'ai') + (isError ? ' error' : '');
 
   if(role !== 'user' && !isError){
-    const { svg, cleaned } = extractSvg(text);
-    if(svg){
-      if(cleaned){
-        const p = document.createElement('div');
-        p.textContent = cleaned;
-        div.appendChild(p);
+    const parts = parseContent(text);
+    parts.forEach(part => {
+      if(part.type === 'text'){
+        if(part.value){
+          const p = document.createElement('div');
+          p.textContent = part.value;
+          div.appendChild(p);
+        }
+      } else if(part.type === 'svg'){
+        const preview = document.createElement('div');
+        preview.className = 'svg-preview';
+        preview.innerHTML = part.code;
+        div.appendChild(preview);
+      } else if(part.type === 'code'){
+        div.appendChild(buildCodeCard(part));
       }
-      const preview = document.createElement('div');
-      preview.className = 'svg-preview';
-      preview.innerHTML = svg;
-      div.appendChild(preview);
-    } else {
-      div.textContent = text;
-    }
+    });
   } else {
     div.textContent = text;
   }
