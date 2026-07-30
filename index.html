@@ -362,6 +362,23 @@
     padding:10px;
     opacity:.8;
   }
+  .svg-preview{
+    margin-top:10px;
+    background:rgba(0,0,0,0.35);
+    border:1px solid var(--panel-border);
+    border-radius:12px;
+    padding:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:var(--glow);
+  }
+  .svg-preview svg{
+    width:100%;
+    max-width:220px;
+    height:auto;
+    display:block;
+  }
   @keyframes shakeX{
     0%,100%{transform:translateX(0);}
     20%,60%{transform:translateX(-6px);}
@@ -398,7 +415,17 @@
     <div id="settings">
       <div class="row">
         <div>
-          <label>Google Gemini API Key (gratis)</label>
+          <label>Provider AI</label>
+          <select id="provider">
+            <option value="gemini">Google Gemini (gratis)</option>
+            <option value="openrouter">OpenRouter — GPT-OSS (OpenAI) & lainnya (gratis)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" id="geminiFields">
+        <div>
+          <label>Google Gemini API Key</label>
           <input type="password" id="apiKey" placeholder="AIza...">
         </div>
         <div>
@@ -410,14 +437,32 @@
           </select>
         </div>
       </div>
-      <div>Belum punya API key? Ambil gratis di <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> pakai akun Google — tanpa kartu kredit.</div>
+      <div id="geminiNote">Belum punya API key? Ambil gratis di <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> pakai akun Google — tanpa kartu kredit.</div>
+
+      <div class="row" id="openrouterFields" style="display:none;">
+        <div>
+          <label>OpenRouter API Key</label>
+          <input type="password" id="orKey" placeholder="sk-or-...">
+        </div>
+        <div>
+          <label>Model</label>
+          <select id="orModel">
+            <option value="openai/gpt-oss-20b:free">GPT-OSS 20B — dari OpenAI, mirip ChatGPT (gratis)</option>
+            <option value="openai/gpt-oss-120b:free">GPT-OSS 120B — dari OpenAI, lebih pintar (gratis)</option>
+            <option value="google/gemma-4-31b-it:free">Gemma 4 31B — dari Google (gratis)</option>
+            <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super — dari NVIDIA (gratis)</option>
+          </select>
+        </div>
+      </div>
+      <div id="openrouterNote" style="display:none;">Belum punya API key? Daftar gratis di <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a> — tanpa kartu kredit. GPT-OSS adalah model open-source resmi dari OpenAI (bukan ChatGPT asli, tapi keluarga yang sama). Anthropic Claude belum punya versi gratis, jadi belum bisa ditambahkan di sini.</div>
+
       <button class="save" id="saveKey">Simpan di browser ini</button>
     </div>
 
     <div id="log">
       <div class="empty" id="emptyState">
         <span class="prompt">&gt;</span> ketik pesan pertamamu di bawah<br>
-        by.kisee bebas tanya ke ai evermine
+        website ini 100% gratis, jalan di browser kamu sendiri
       </div>
     </div>
 
@@ -428,7 +473,7 @@
   </div>
 </main>
 
-<footer>dibuat oleh Nathan Developer · dihosting gratis di GitHub Pages · digerakkan oleh Gemini API (gratis)</footer>
+<footer>dibuat oleh Nathan Developer · dihosting gratis di GitHub Pages · digerakkan oleh Gemini &amp; OpenRouter (gratis)</footer>
 
 <script>
 const log = document.getElementById('log');
@@ -438,23 +483,51 @@ const sendBtn = document.getElementById('sendBtn');
 const emptyState = document.getElementById('emptyState');
 const settingsPanel = document.getElementById('settings');
 const toggleSettings = document.getElementById('toggleSettings');
+const providerSelect = document.getElementById('provider');
+const geminiFields = document.getElementById('geminiFields');
+const geminiNote = document.getElementById('geminiNote');
+const openrouterFields = document.getElementById('openrouterFields');
+const openrouterNote = document.getElementById('openrouterNote');
 const apiKeyInput = document.getElementById('apiKey');
 const modelSelect = document.getElementById('model');
+const orKeyInput = document.getElementById('orKey');
+const orModelSelect = document.getElementById('orModel');
 const saveKeyBtn = document.getElementById('saveKey');
 const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 
-let history = [];
+const SYSTEM_PROMPT = 'Kamu adalah Evermine, asisten AI yang ramah. Jawab dalam bahasa yang sama dengan pengguna. Kalau diminta membuat logo, ikon, atau gambar vektor, buat sebagai kode SVG utuh dan valid (mulai dari <svg ...> sampai </svg>), dibungkus dalam code fence ```svg ... ```.';
+
+let history = []; // { role: 'user' | 'ai', text: string }
+
+function currentApiKey(){
+  return providerSelect.value === 'gemini' ? apiKeyInput.value.trim() : orKeyInput.value.trim();
+}
+
+function toggleProviderFields(){
+  const isGemini = providerSelect.value === 'gemini';
+  geminiFields.style.display = isGemini ? 'flex' : 'none';
+  geminiNote.style.display = isGemini ? 'block' : 'none';
+  openrouterFields.style.display = isGemini ? 'none' : 'flex';
+  openrouterNote.style.display = isGemini ? 'none' : 'block';
+}
 
 function loadSaved(){
+  const savedProvider = localStorage.getItem('ai_provider');
   const savedKey = localStorage.getItem('gemini_api_key');
   const savedModel = localStorage.getItem('gemini_model');
+  const savedOrKey = localStorage.getItem('openrouter_api_key');
+  const savedOrModel = localStorage.getItem('openrouter_model');
+  if(savedProvider){ providerSelect.value = savedProvider; }
   if(savedKey){ apiKeyInput.value = savedKey; }
   if(savedModel){ modelSelect.value = savedModel; }
+  if(savedOrKey){ orKeyInput.value = savedOrKey; }
+  if(savedOrModel){ orModelSelect.value = savedOrModel; }
+  toggleProviderFields();
   updateStatus();
 }
 function updateStatus(){
-  if(apiKeyInput.value.trim()){
+  if(currentApiKey()){
     statusDot.classList.add('ok');
     statusText.textContent = 'siap dipakai';
   } else {
@@ -463,19 +536,62 @@ function updateStatus(){
     settingsPanel.classList.add('open');
   }
 }
+providerSelect.addEventListener('change', () => {
+  toggleProviderFields();
+  updateStatus();
+});
 toggleSettings.addEventListener('click', () => settingsPanel.classList.toggle('open'));
 saveKeyBtn.addEventListener('click', () => {
+  localStorage.setItem('ai_provider', providerSelect.value);
   localStorage.setItem('gemini_api_key', apiKeyInput.value.trim());
   localStorage.setItem('gemini_model', modelSelect.value);
+  localStorage.setItem('openrouter_api_key', orKeyInput.value.trim());
+  localStorage.setItem('openrouter_model', orModelSelect.value);
   updateStatus();
   settingsPanel.classList.remove('open');
 });
+
+function stripDangerousTags(svg){
+  return svg
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
+    .replace(/\son\w+\s*=\s*'[^']*'/gi, '');
+}
+
+function extractSvg(text){
+  const fenceMatch = text.match(/```(?:xml|svg|html)?\s*([\s\S]*?<svg[\s\S]*?<\/svg>[\s\S]*?)```/i);
+  const raw = fenceMatch ? fenceMatch[1] : text;
+  const svgMatch = raw.match(/<svg[\s\S]*?<\/svg>/i);
+  if(!svgMatch) return { svg: null, cleaned: text };
+  const removeTarget = fenceMatch ? fenceMatch[0] : svgMatch[0];
+  const cleaned = text.replace(removeTarget, '').trim();
+  return { svg: stripDangerousTags(svgMatch[0]), cleaned };
+}
 
 function addMessage(role, text, isError=false){
   emptyState.remove();
   const div = document.createElement('div');
   div.className = 'msg ' + (role === 'user' ? 'user' : 'ai') + (isError ? ' error' : '');
-  div.textContent = text;
+
+  if(role !== 'user' && !isError){
+    const { svg, cleaned } = extractSvg(text);
+    if(svg){
+      if(cleaned){
+        const p = document.createElement('div');
+        p.textContent = cleaned;
+        div.appendChild(p);
+      }
+      const preview = document.createElement('div');
+      preview.className = 'svg-preview';
+      preview.innerHTML = svg;
+      div.appendChild(preview);
+    } else {
+      div.textContent = text;
+    }
+  } else {
+    div.textContent = text;
+  }
+
   log.appendChild(div);
   log.scrollTop = log.scrollHeight;
   return div;
@@ -517,10 +633,60 @@ sendBtn.addEventListener('click', (e) => {
   handleSend(e);
 });
 
+async function callGemini(apiKey, model, userText){
+  const contents = history.map(m => ({
+    role: m.role === 'user' ? 'user' : 'model',
+    parts: [{ text: m.text }]
+  }));
+  contents.push({ role: 'user', parts: [{ text: userText }] });
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey
+      },
+      body: JSON.stringify({
+        contents,
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
+      })
+    }
+  );
+  const data = await res.json();
+  if(!res.ok){
+    throw new Error(data?.error?.message || 'Gagal menghubungi Gemini API.');
+  }
+  return data?.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '(tidak ada balasan)';
+}
+
+async function callOpenRouter(apiKey, model, userText){
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...history.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text })),
+    { role: 'user', content: userText }
+  ];
+
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey
+    },
+    body: JSON.stringify({ model, messages })
+  });
+  const data = await res.json();
+  if(!res.ok){
+    throw new Error(data?.error?.message || 'Gagal menghubungi OpenRouter API.');
+  }
+  return data?.choices?.[0]?.message?.content || '(tidak ada balasan)';
+}
+
 async function handleSend(e){
   e.preventDefault();
   const text = input.value.trim();
-  const apiKey = apiKeyInput.value.trim();
+  const apiKey = currentApiKey();
   if(!text){
     shake(form);
     input.focus();
@@ -529,52 +695,30 @@ async function handleSend(e){
   if(!apiKey){
     settingsPanel.classList.add('open');
     shake(settingsPanel);
-    apiKeyInput.focus();
+    (providerSelect.value === 'gemini' ? apiKeyInput : orKeyInput).focus();
     return;
   }
 
   addMessage('user', text);
-  history.push({ role: 'user', parts: [{ text }] });
   input.value = '';
   input.style.height = 'auto';
   sendBtn.disabled = true;
   addThinking();
 
   try{
-    const model = modelSelect.value;
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
-        },
-        body: JSON.stringify({
-          contents: history,
-          systemInstruction: {
-            parts: [{ text: 'Kamu adalah Evermine, asisten AI yang ramah. Jawab dalam bahasa yang sama dengan pengguna.' }]
-          }
-        })
-      }
-    );
+    const provider = providerSelect.value;
+    const reply = provider === 'gemini'
+      ? await callGemini(apiKey, modelSelect.value, text)
+      : await callOpenRouter(apiKey, orModelSelect.value, text);
 
-    const data = await res.json();
     removeThinking();
-
-    if(!res.ok){
-      const msg = data?.error?.message || 'Gagal menghubungi API.';
-      addMessage('ai', 'Error: ' + msg, true);
-      return;
-    }
-
-    const reply = data?.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '(tidak ada balasan)';
     addMessage('ai', reply);
-    history.push({ role: 'model', parts: [{ text: reply }] });
+    history.push({ role: 'user', text });
+    history.push({ role: 'ai', text: reply });
 
   } catch(err){
     removeThinking();
-    addMessage('ai', 'Error jaringan: ' + err.message, true);
+    addMessage('ai', 'Error: ' + err.message, true);
   } finally {
     sendBtn.disabled = false;
   }
