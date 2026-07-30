@@ -780,7 +780,28 @@ sendBtn.addEventListener('click', (e) => {
   handleSend(e);
 });
 
-async function callGemini(apiKey, model, userText){
+// Baca response Server-Sent-Events baris demi baris, panggil onDelta tiap chunk JSON
+async function streamSSE(res, onDelta){
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  while(true){
+    const { done, value } = await reader.read();
+    if(done) break;
+    buffer += decoder.decode(value, { stream:true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for(const line of lines){
+      const trimmed = line.trim();
+      if(!trimmed.startsWith('data:')) continue;
+      const payload = trimmed.slice(5).trim();
+      if(payload === '[DONE]') continue;
+      try{ onDelta(JSON.parse(payload)); } catch(e){ /* potongan JSON belum lengkap, lewati */ }
+    }
+  }
+}
+
+async function callGemini(apiKey, model, userText, onProgress){
   const contents = history.map(m => ({
     role: m.role === 'user' ? 'user' : 'model',
     parts: [{ text: m.text }]
@@ -788,7 +809,7 @@ async function callGemini(apiKey, model, userText){
   contents.push({ role: 'user', parts: [{ text: userText }] });
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`,
     {
       method: 'POST',
       headers: {
@@ -801,14 +822,26 @@ async function callGemini(apiKey, model, userText){
       })
     }
   );
-  const data = await res.json();
+
   if(!res.ok){
-    throw new Error(data?.error?.message || 'Gagal menghubungi Gemini API.');
+    let msg = 'Gagal menghubungi Gemini API.';
+    try{ msg = (await res.json())?.error?.message || msg; } catch(e){}
+    throw new Error(msg);
   }
-  return data?.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '(tidak ada balasan)';
+
+  let full = '';
+  await streamSSE(res, (chunk) => {
+    const piece = chunk?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+    if(piece){ full += piece; onProgress(full); }
+  });
+
+  if(!full.trim()){
+    throw new Error('Model tidak memberi balasan (kemungkinan diblokir filter atau server sedang bermasalah). Coba ganti model atau kirim ulang.');
+  }
+  return full;
 }
 
-async function callOpenRouter(apiKey, model, userText){
+async function callOpenRouter(apiKey, model, userText, onProgress){
   const messages = [
     { role: 'system', content: SYSTEM_PROMPT },
     ...history.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text })),
@@ -821,13 +854,46 @@ async function callOpenRouter(apiKey, model, userText){
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + apiKey
     },
-    body: JSON.stringify({ model, messages })
+    body: JSON.stringify({ model, messages, stream: true })
   });
-  const data = await res.json();
+
   if(!res.ok){
-    throw new Error(data?.error?.message || 'Gagal menghubungi OpenRouter API.');
+    let msg = 'Gagal menghubungi OpenRouter API.';
+    try{ msg = (await res.json())?.error?.message || msg; } catch(e){}
+    throw new Error(msg);
   }
-  return data?.choices?.[0]?.message?.content || '(tidak ada balasan)';
+
+  let full = '';
+  await streamSSE(res, (chunk) => {
+    const delta = chunk?.choices?.[0]?.delta || {};
+    const piece = delta.content || delta.reasoning || '';
+    if(piece){ full += piece; onProgress(full); }
+  });
+
+  if(!full.trim()){
+    throw new Error('Model tidak memberi balasan (kemungkinan sedang sibuk atau konten diblokir). Coba ganti model atau kirim ulang.');
+  }
+  return full;
+}
+
+function renderAiParts(container, text){
+  container.innerHTML = '';
+  parseContent(text).forEach(part => {
+    if(part.type === 'text'){
+      if(part.value){
+        const p = document.createElement('div');
+        p.textContent = part.value;
+        container.appendChild(p);
+      }
+    } else if(part.type === 'svg'){
+      const preview = document.createElement('div');
+      preview.className = 'svg-preview';
+      preview.innerHTML = part.code;
+      container.appendChild(preview);
+    } else if(part.type === 'code'){
+      container.appendChild(buildCodeCard(part));
+    }
+  });
 }
 
 async function handleSend(e){
@@ -852,19 +918,36 @@ async function handleSend(e){
   sendBtn.disabled = true;
   addThinking();
 
+  // siapkan bubble AI kosong, teks streaming langsung ditulis di sini secara mentah dulu
+  let streamDiv = null;
+  const showProgress = (partial) => {
+    if(!streamDiv){
+      removeThinking();
+      emptyState.remove();
+      streamDiv = document.createElement('div');
+      streamDiv.className = 'msg ai';
+      log.appendChild(streamDiv);
+    }
+    streamDiv.textContent = partial;
+    log.scrollTop = log.scrollHeight;
+  };
+
   try{
     const provider = providerSelect.value;
     const reply = provider === 'gemini'
-      ? await callGemini(apiKey, modelSelect.value, text)
-      : await callOpenRouter(apiKey, orModelSelect.value, text);
+      ? await callGemini(apiKey, modelSelect.value, text, showProgress)
+      : await callOpenRouter(apiKey, orModelSelect.value, text, showProgress);
 
-    removeThinking();
-    addMessage('ai', reply);
+    // render ulang jadi versi rapi (code card, svg, dst) setelah stream selesai
+    if(streamDiv){ renderAiParts(streamDiv, reply); }
+    else { addMessage('ai', reply); }
+
     history.push({ role: 'user', text });
     history.push({ role: 'ai', text: reply });
 
   } catch(err){
     removeThinking();
+    if(streamDiv) streamDiv.remove();
     addMessage('ai', 'Error: ' + err.message, true);
   } finally {
     sendBtn.disabled = false;
