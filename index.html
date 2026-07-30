@@ -371,27 +371,57 @@
     height:auto;
     display:block;
   }
+  .md-text strong{ color:#F3E8FF; font-weight:700; }
+  .md-text em{ color:#D8B4FE; font-style:italic; }
+  .md-text code{
+    font-family:'IBM Plex Mono', monospace;
+    background:rgba(178,107,255,0.12);
+    padding:1px 5px;
+    border-radius:5px;
+    font-size:0.92em;
+  }
   .code-card{
-    margin-top:10px;
+    margin-top:12px;
     background:#0A0714;
     border:1px solid var(--panel-border);
-    border-radius:12px;
+    border-radius:14px;
     overflow:hidden;
-    box-shadow:0 4px 18px rgba(0,0,0,0.4);
+    box-shadow:0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px rgba(178,107,255,0.06);
+  }
+  .code-accent{
+    height:3px;
+    background:linear-gradient(90deg,#f0abfc,#b26bff,#6d28d9,#b26bff,#f0abfc);
+    background-size:200% auto;
+    animation:shine 6s linear infinite;
   }
   .code-header{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:8px 12px;
-    background:rgba(178,107,255,0.08);
+    padding:10px 14px;
+    background:linear-gradient(180deg, rgba(178,107,255,0.10), rgba(178,107,255,0.03));
     border-bottom:1px solid var(--panel-border);
   }
+  .code-header-left{
+    display:flex;
+    align-items:center;
+    gap:9px;
+  }
+  .code-dot{
+    width:9px; height:9px;
+    border-radius:50%;
+    display:inline-block;
+    opacity:.85;
+  }
+  .code-dot.d1{ background:#F2795C; }
+  .code-dot.d2{ background:#F2C955; }
+  .code-dot.d3{ background:#6BFFB0; }
   .code-lang{
     font-family:'IBM Plex Mono', monospace;
     font-size:11px;
     color:var(--text-dim);
-    letter-spacing:.05em;
+    letter-spacing:.08em;
+    margin-left:4px;
   }
   .code-actions{display:flex; gap:6px;}
   .code-btn{
@@ -400,28 +430,47 @@
     color:var(--text-dim);
     font-family:'IBM Plex Mono', monospace;
     font-size:11px;
-    padding:5px 9px;
+    padding:5px 10px;
     border-radius:7px;
     cursor:pointer;
     transition:.15s;
     white-space:nowrap;
   }
-  .code-btn:hover{ color:var(--text); border-color:var(--accent); }
+  .code-btn:hover{ color:var(--text); border-color:var(--accent); transform:translateY(-1px); }
   .code-btn.primary{
     background:linear-gradient(135deg,#a855f7,#6d28d9);
     color:#fff;
     border:none;
   }
   .code-btn.primary:hover{ box-shadow:var(--glow); }
+  .code-body{
+    display:flex;
+    max-height:360px;
+    overflow:auto;
+  }
+  .code-gutter{
+    flex-shrink:0;
+    padding:14px 10px 14px 14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    line-height:1.65;
+    color:#5B5170;
+    text-align:right;
+    user-select:none;
+    background:rgba(255,255,255,0.015);
+    border-right:1px solid rgba(178,107,255,0.12);
+    white-space:pre;
+  }
   .code-card pre{
     margin:0;
     padding:14px;
     overflow-x:auto;
-    max-height:340px;
+    flex:1;
   }
   .code-card code{
     font-family:'IBM Plex Mono', monospace;
     font-size:12.5px;
+    line-height:1.65;
     color:#E9D5FF;
     white-space:pre;
   }
@@ -608,8 +657,25 @@ function stripDangerousTags(svg){
     .replace(/\son\w+\s*=\s*'[^']*'/gi, '');
 }
 
+const EXT_MAP = {
+  java:'java', javascript:'js', js:'js', typescript:'ts', ts:'ts',
+  python:'py', py:'py', html:'html', css:'css', json:'json',
+  yaml:'yml', yml:'yml', xml:'xml', kotlin:'kt', c:'c', cpp:'cpp',
+  csharp:'cs', 'c#':'cs', php:'php', ruby:'rb', go:'go', rust:'rs',
+  bash:'sh', shell:'sh', sql:'sql', svg:'svg', kode:'txt'
+};
+
 function escapeHtml(s){
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Render markdown ringan (bold/italic/inline code) jadi HTML aman
+function renderInlineMarkdown(text){
+  let safe = escapeHtml(text);
+  safe = safe.replace(/`([^`]+)`/g, '<code>$1</code>');
+  safe = safe.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  safe = safe.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+  return safe;
 }
 
 function looksLikeHtml(lang, code){
@@ -648,13 +714,22 @@ function buildCodeCard(part){
   const card = document.createElement('div');
   card.className = 'code-card';
 
+  const accent = document.createElement('div');
+  accent.className = 'code-accent';
+  card.appendChild(accent);
+
   const header = document.createElement('div');
   header.className = 'code-header';
+
+  const left = document.createElement('div');
+  left.className = 'code-header-left';
+  left.innerHTML = '<span class="code-dot d1"></span><span class="code-dot d2"></span><span class="code-dot d3"></span>';
 
   const langLabel = document.createElement('span');
   langLabel.className = 'code-lang';
   langLabel.textContent = part.lang.toUpperCase();
-  header.appendChild(langLabel);
+  left.appendChild(langLabel);
+  header.appendChild(left);
 
   const actions = document.createElement('div');
   actions.className = 'code-actions';
@@ -681,6 +756,23 @@ function buildCodeCard(part){
     actions.appendChild(previewBtn);
   }
 
+  const downloadBtn = document.createElement('button');
+  downloadBtn.className = 'code-btn';
+  downloadBtn.textContent = '⬇ Unduh';
+  downloadBtn.addEventListener('click', () => {
+    const ext = EXT_MAP[part.lang] || 'txt';
+    const blob = new Blob([part.code], { type:'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `evermine-code.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+  actions.appendChild(downloadBtn);
+
   const copyBtn = document.createElement('button');
   copyBtn.className = 'code-btn primary';
   copyBtn.textContent = 'Salin';
@@ -703,11 +795,22 @@ function buildCodeCard(part){
   header.appendChild(actions);
   card.appendChild(header);
 
+  const body = document.createElement('div');
+  body.className = 'code-body';
+
+  const lines = part.code.split('\n');
+  const gutter = document.createElement('div');
+  gutter.className = 'code-gutter';
+  gutter.textContent = lines.map((_, i) => i + 1).join('\n');
+  body.appendChild(gutter);
+
   const pre = document.createElement('pre');
   const codeEl = document.createElement('code');
   codeEl.innerHTML = escapeHtml(part.code);
   pre.appendChild(codeEl);
-  card.appendChild(pre);
+  body.appendChild(pre);
+
+  card.appendChild(body);
 
   return card;
 }
@@ -723,7 +826,8 @@ function addMessage(role, text, isError=false){
       if(part.type === 'text'){
         if(part.value){
           const p = document.createElement('div');
-          p.textContent = part.value;
+          p.className = 'md-text';
+          p.innerHTML = renderInlineMarkdown(part.value);
           div.appendChild(p);
         }
       } else if(part.type === 'svg'){
@@ -882,7 +986,8 @@ function renderAiParts(container, text){
     if(part.type === 'text'){
       if(part.value){
         const p = document.createElement('div');
-        p.textContent = part.value;
+        p.className = 'md-text';
+        p.innerHTML = renderInlineMarkdown(part.value);
         container.appendChild(p);
       }
     } else if(part.type === 'svg'){
